@@ -6,7 +6,9 @@ import com.xuxueli.poi.excel.util.FieldReflectionUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,45 +29,82 @@ import java.util.Map;
 public class ExcelExportUtil {
     private static Logger logger = LoggerFactory.getLogger(ExcelExportUtil.class);
 
+    /**
+     * 工作薄对象
+     * 2007/xlsx
+     * 2003/xls
+     */
+    private static Workbook wb;
+
+    /**
+     * 工作表对象
+     */
+    private Sheet sheet;
+
+    /**
+     * 样式列表
+     */
+    private Map<String, CellStyle> styles;
+
+    /**
+     * 当前行号
+     */
+    private int rownum;
+
+    /**
+     * 默认导出文件类型
+     */
+    private static final String DEFAULTFILETYPE = "xls";
+
 
     /**
      * 导出Excel对象
      *
-     * @param sheetDataListArr  Excel数据
+     * @param suffix           xls,xlsx
+     * @param sheetDataListArr Excel数据
      * @return Workbook
      */
-    public static Workbook exportWorkbook(List<?>... sheetDataListArr){
+    public static Workbook exportWorkbook(String suffix, List<?>... sheetDataListArr) {
 
         // data array valid
-        if (sheetDataListArr==null || sheetDataListArr.length==0) {
-            throw new RuntimeException(">>>>>>>>>>> xxl-excel error, data array can not be empty.");
+        if (sheetDataListArr == null || sheetDataListArr.length == 0) {
+            throw new RuntimeException(">>>>>>>>>>> error, data array can not be empty.");
         }
 
-        // book （HSSFWorkbook=2003/xls、XSSFWorkbook=2007/xlsx）
-        Workbook workbook = new HSSFWorkbook();
+        //创建workbook类型
+        if (suffix != null && !suffix.equals("") && suffix.equals("xls")) {
+            wb = new HSSFWorkbook();
+        } else if (suffix.equals("xlsx")) {
+            wb = new XSSFWorkbook();
+        }
 
         // sheet
-        for (List<?> dataList: sheetDataListArr) {
-            makeSheet(workbook, dataList);
+        for (List<?> dataList : sheetDataListArr) {
+            makeSheet(wb, dataList);
         }
-
-        return workbook;
+        return wb;
     }
 
-    private static void makeSheet(Workbook workbook, List<?> sheetDataList){
+    /**
+     * @param workbook
+     * @param sheetDataList class
+     */
+    private static void makeSheet(Workbook workbook, List<?> sheetDataList) {
         // data
-        if (sheetDataList==null || sheetDataList.size()==0) {
+        if (sheetDataList == null || sheetDataList.size() == 0) {
             throw new RuntimeException(">>>>>>>>>>> xxl-excel error, data can not be empty.");
         }
 
         // sheet
         Class<?> sheetClass = sheetDataList.get(0).getClass();
         ExcelSheet excelSheet = sheetClass.getAnnotation(ExcelSheet.class);
+        //header从第几行开始写入，前面可以自己定义title，sub Title
+        int startLine = excelSheet.startLine();
 
         String sheetName = sheetDataList.get(0).getClass().getSimpleName();
         int headColorIndex = -1;
         if (excelSheet != null) {
-            if (excelSheet.name()!=null && excelSheet.name().trim().length()>0) {
+            if (excelSheet.name() != null && excelSheet.name().trim().length() > 0) {
                 sheetName = excelSheet.name().trim();
             }
             headColorIndex = excelSheet.headColor().getIndex();
@@ -89,15 +128,15 @@ public class ExcelExportUtil {
 
         // sheet field
         List<Field> fields = new ArrayList<Field>();
-        if (sheetClass.getDeclaredFields()!=null && sheetClass.getDeclaredFields().length>0) {
-            for (Field field: sheetClass.getDeclaredFields()) {
+        if (sheetClass.getDeclaredFields() != null && sheetClass.getDeclaredFields().length > 0) {
+            for (Field field : sheetClass.getDeclaredFields()) {
                 if (Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
                 fields.add(field);
             }
         }
-        if (fields==null || fields.size()==0) {
+        if (fields == null || fields.size() == 0) {
             throw new RuntimeException(">>>>>>>>>>> xxl-excel error, data field can not be empty.");
         }
 
@@ -114,7 +153,7 @@ public class ExcelExportUtil {
             int fieldWidth = 0;
             HorizontalAlignment align = null;
             if (excelField != null) {
-                if (excelField.name()!=null && excelField.name().trim().length()>0) {
+                if (excelField.name() != null && excelField.name().trim().length() > 0) {
                     fieldName = excelField.name().trim();
                 }
                 fieldWidth = excelField.width();
@@ -147,7 +186,7 @@ public class ExcelExportUtil {
 
         /*--------------------sheet data rows--------------------*/
         for (int dataIndex = 0; dataIndex < sheetDataList.size(); dataIndex++) {
-            int rowIndex = dataIndex+1;
+            int rowIndex = dataIndex + 1;
             Object rowData = sheetDataList.get(dataIndex);
 
             Row rowX = sheet.createRow(rowIndex);
@@ -176,29 +215,31 @@ public class ExcelExportUtil {
             if (fieldWidth > 0) {
                 sheet.setColumnWidth(i, fieldWidth);
             } else {
-                sheet.autoSizeColumn((short)i);
+                sheet.autoSizeColumn((short) i);
             }
         }
     }
-
 
 
     /**
      * 导出Excel文件到磁盘
      *
      * @param filePath
-     * @param sheetDataListArr  数据，可变参数，如多个参数则代表导出多张Sheet
+     * @param sheetDataListArr 数据，可变参数，如多个参数则代表导出多张Sheet
      */
-    public static void exportToFile(String filePath, List<?>... sheetDataListArr){
+    public static void exportToFile(String filePath, List<?>... sheetDataListArr) {
+        //获取导出文件类型
+        String[] pfix = filePath.split("\\.");
+        String suffix = pfix[pfix.length - 1];
+
         // workbook
-        Workbook workbook = exportWorkbook(sheetDataListArr);
+        Workbook workbook = exportWorkbook(suffix, sheetDataListArr);
 
         FileOutputStream fileOutputStream = null;
         try {
             // workbook 2 FileOutputStream
             fileOutputStream = new FileOutputStream(filePath);
             workbook.write(fileOutputStream);
-
             // flush
             fileOutputStream.flush();
         } catch (Exception e) {
@@ -206,7 +247,7 @@ public class ExcelExportUtil {
             throw new RuntimeException(e);
         } finally {
             try {
-                if (fileOutputStream!=null) {
+                if (fileOutputStream != null) {
                     fileOutputStream.close();
                 }
             } catch (Exception e) {
@@ -222,9 +263,9 @@ public class ExcelExportUtil {
      * @param sheetDataListArr
      * @return byte[]
      */
-    public static byte[] exportToBytes(List<?>... sheetDataListArr){
+    public static byte[] exportToBytes(List<?>... sheetDataListArr) {
         // workbook
-        Workbook workbook = exportWorkbook(sheetDataListArr);
+        Workbook workbook = exportWorkbook(DEFAULTFILETYPE, sheetDataListArr);
 
         ByteArrayOutputStream byteArrayOutputStream = null;
         byte[] result = null;

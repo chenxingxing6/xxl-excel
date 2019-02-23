@@ -28,5 +28,12 @@ public @interface ExcelSheet {
      */
     HSSFColor.HSSFColorPredefined headColor() default HSSFColor.HSSFColorPredefined.LIGHT_GREEN;
 
+    /**
+     * header启始行
+     *
+     * @return String
+     */
+    int startLine() default 0;
+
 }
 
