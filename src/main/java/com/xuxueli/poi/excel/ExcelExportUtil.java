@@ -49,7 +49,7 @@ public class ExcelExportUtil {
     /**
      * 当前行号
      */
-    private int rownum;
+    private static int rownum;
 
     /**
      * 默认导出文件类型
@@ -64,7 +64,7 @@ public class ExcelExportUtil {
      * @param sheetDataListArr Excel数据
      * @return Workbook
      */
-    public static Workbook exportWorkbook(String suffix, List<?>... sheetDataListArr) {
+    public Workbook exportWorkbook(String suffix, List<?>... sheetDataListArr) {
 
         // data array valid
         if (sheetDataListArr == null || sheetDataListArr.length == 0) {
@@ -89,7 +89,7 @@ public class ExcelExportUtil {
      * @param workbook
      * @param sheetDataList class
      */
-    private static void makeSheet(Workbook workbook, List<?> sheetDataList) {
+    private void makeSheet(Workbook workbook, List<?> sheetDataList) {
         // data
         if (sheetDataList == null || sheetDataList.size() == 0) {
             throw new RuntimeException(">>>>>>>>>>> xxl-excel error, data can not be empty.");
@@ -143,7 +143,8 @@ public class ExcelExportUtil {
         /*--------------------sheet头部处理--------------------*/
         CellStyle[] fieldDataStyleArr = new CellStyle[fields.size()];
         int[] fieldWidthArr = new int[fields.size()];
-        Row headRow = sheet.createRow(0);
+        Row headRow = sheet.createRow(startLine);
+        rownum = startLine;
         for (int i = 0; i < fields.size(); i++) {
             // field
             Field field = fields.get(i);
@@ -186,7 +187,7 @@ public class ExcelExportUtil {
 
         /*--------------------sheet data rows--------------------*/
         for (int dataIndex = 0; dataIndex < sheetDataList.size(); dataIndex++) {
-            int rowIndex = dataIndex + 1;
+            int rowIndex = dataIndex + startLine + 1;
             Object rowData = sheetDataList.get(dataIndex);
 
             Row rowX = sheet.createRow(rowIndex);
@@ -227,7 +228,7 @@ public class ExcelExportUtil {
      * @param filePath
      * @param sheetDataListArr 数据，可变参数，如多个参数则代表导出多张Sheet
      */
-    public static void exportToFile(String filePath, List<?>... sheetDataListArr) {
+    public void exportToFile(String filePath, List<?>... sheetDataListArr) {
         //获取导出文件类型
         String[] pfix = filePath.split("\\.");
         String suffix = pfix[pfix.length - 1];
@@ -263,7 +264,7 @@ public class ExcelExportUtil {
      * @param sheetDataListArr
      * @return byte[]
      */
-    public static byte[] exportToBytes(List<?>... sheetDataListArr) {
+    public byte[] exportToBytes(List<?>... sheetDataListArr) {
         // workbook
         Workbook workbook = exportWorkbook(DEFAULTFILETYPE, sheetDataListArr);
 
@@ -292,6 +293,59 @@ public class ExcelExportUtil {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+
+    /**
+     * 添加一行
+     *
+     * @return 行对象
+     */
+    public Row addRow(int rowNum) {
+        return sheet.createRow(rowNum);
+    }
+
+
+    /**
+     * 添加一个单元格
+     *
+     * @param row    添加的行
+     * @param column 添加列号
+     * @return 单元格对象
+     */
+    public Cell addCell(Row row, int column, Object value) {
+        Cell cell = row.createCell(column, CellType.STRING);
+        //样式设置
+        CellStyle titleStyle = styles.get("title");
+        cell.setCellStyle(titleStyle);
+        //值设置
+        cell.setCellValue(String.valueOf(value));
+        return cell;
+    }
+
+
+    /**
+     * 创建表格样式
+     *
+     * @param wb 工作薄对象
+     * @return 样式列表
+     */
+    private Map<String, CellStyle> createStyles(Workbook wb){
+        Map<String, CellStyle> styles = new HashMap<String, CellStyle>();
+        CellStyle style = wb.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        Font titleFont = wb.createFont();
+        titleFont.setFontName("Arial");
+        titleFont.setFontHeightInPoints((short) 16);
+        titleFont.setBold(true);
+        style.setFont(titleFont);
+        int headColorIndex = -1;
+        style.setFillForegroundColor((short) headColorIndex);
+        style.setFillBackgroundColor((short) headColorIndex);
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        styles.put("title", style);
+        return styles;
     }
 
 }

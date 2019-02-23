@@ -5,6 +5,7 @@ import com.xuxueli.poi.excel.ExcelExportUtil;
 import com.xuxueli.poi.excel.ExcelImportUtil;
 import com.xuxueli.poi.excel.test.model.ShopDTO;
 import com.xuxueli.poi.excel.test.model.UserDTO;
+import org.apache.poi.ss.usermodel.Row;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,12 +35,15 @@ public class Test {
             userDTO.setAge(i);
             userDTOList.add(userDTO);
         }
-        String filePath = "/Users/cxx/Downloads/demo-sheet.xlsx";
+        String filePath = "/Users/cxx/Downloads/demo-sheet.xls";
 
         /**
          * Excel导出：Object 转换为 Excel
          */
-        ExcelExportUtil.exportToFile(filePath, shopDTOList, userDTOList);
+        ExcelExportUtil util = new ExcelExportUtil();
+        Row cells = util.addRow(0);
+        util.addCell(cells, 1, "title");
+        util.exportToFile(filePath, shopDTOList, userDTOList);
 
         /**
          * Excel导入：Excel 转换为 Object
