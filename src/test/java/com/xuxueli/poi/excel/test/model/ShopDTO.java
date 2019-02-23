@@ -12,7 +12,7 @@ import java.util.Date;
  *
  * @author xuxueli 2017-09-12 11:20:02
  */
-@ExcelSheet(name = "商户列表", headColor = HSSFColor.HSSFColorPredefined.LIGHT_GREEN)
+@ExcelSheet(name = "商户列表", headColor = HSSFColor.HSSFColorPredefined.BRIGHT_GREEN)
 public class ShopDTO {
 
     @ExcelField(name = "是否VIP商户")

@@ -46,6 +46,7 @@ public class ExcelImportUtil {
             List<Field> fields = new ArrayList<Field>();
             if (sheetClass.getDeclaredFields()!=null && sheetClass.getDeclaredFields().length>0) {
                 for (Field field: sheetClass.getDeclaredFields()) {
+                    //判断该字段是否是static
                     if (Modifier.isStatic(field.getModifiers())) {
                         continue;
                     }
@@ -57,6 +58,7 @@ public class ExcelImportUtil {
                 throw new RuntimeException(">>>>>>>>>>> xxl-excel error, data field can not be empty.");
             }
 
+            //通过sheet名字，看读取那个sheet的数据
             // sheet data
             Sheet sheet = workbook.getSheet(sheetName);
             if (sheet == null) {
@@ -90,6 +92,7 @@ public class ExcelImportUtil {
                         }
 
                         // fill val
+                        //不加这句，不允许反射访问该字段
                         field.setAccessible(true);
                         field.set(rowObj, fieldValue);
                     }

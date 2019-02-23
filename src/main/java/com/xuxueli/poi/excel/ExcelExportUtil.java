@@ -4,7 +4,9 @@ import com.xuxueli.poi.excel.annotation.ExcelField;
 import com.xuxueli.poi.excel.annotation.ExcelSheet;
 import com.xuxueli.poi.excel.util.FieldReflectionUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +15,9 @@ import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Excel导出工具
@@ -93,17 +97,15 @@ public class ExcelExportUtil {
                 fields.add(field);
             }
         }
-
         if (fields==null || fields.size()==0) {
             throw new RuntimeException(">>>>>>>>>>> xxl-excel error, data field can not be empty.");
         }
 
-        // sheet header row
+        /*--------------------sheet头部处理--------------------*/
         CellStyle[] fieldDataStyleArr = new CellStyle[fields.size()];
         int[] fieldWidthArr = new int[fields.size()];
         Row headRow = sheet.createRow(0);
         for (int i = 0; i < fields.size(); i++) {
-
             // field
             Field field = fields.get(i);
             ExcelField excelField = field.getAnnotation(ExcelField.class);
@@ -116,6 +118,7 @@ public class ExcelExportUtil {
                     fieldName = excelField.name().trim();
                 }
                 fieldWidth = excelField.width();
+                //位置的确定
                 align = excelField.align();
             }
 
@@ -128,7 +131,6 @@ public class ExcelExportUtil {
                 fieldDataStyle.setAlignment(align);
             }
             fieldDataStyleArr[i] = fieldDataStyle;
-
             CellStyle headStyle = workbook.createCellStyle();
             headStyle.cloneStyleFrom(fieldDataStyle);
             if (headColorIndex > -1) {
@@ -136,14 +138,14 @@ public class ExcelExportUtil {
                 headStyle.setFillBackgroundColor((short) headColorIndex);
                 headStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             }
-
             // head-field data
             Cell cellX = headRow.createCell(i, CellType.STRING);
             cellX.setCellStyle(headStyle);
             cellX.setCellValue(String.valueOf(fieldName));
         }
 
-        // sheet data rows
+
+        /*--------------------sheet data rows--------------------*/
         for (int dataIndex = 0; dataIndex < sheetDataList.size(); dataIndex++) {
             int rowIndex = dataIndex+1;
             Object rowData = sheetDataList.get(dataIndex);
@@ -178,6 +180,8 @@ public class ExcelExportUtil {
             }
         }
     }
+
+
 
     /**
      * 导出Excel文件到磁盘
