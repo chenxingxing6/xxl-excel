@@ -37,13 +37,8 @@ public class Test {
         }
         String filePath = "/Users/cxx/Downloads/demo-sheet.xls";
 
-        /**
-         * Excel导出：Object 转换为 Excel
-         */
-        ExcelExportUtil util = new ExcelExportUtil();
-        Row cells = util.addRow(0);
-        util.addCell(cells, 1, "title");
-        util.exportToFile(filePath, shopDTOList, userDTOList);
+
+        ExcelExportUtil.exportToFile(filePath, shopDTOList, userDTOList);
 
         /**
          * Excel导入：Excel 转换为 Object

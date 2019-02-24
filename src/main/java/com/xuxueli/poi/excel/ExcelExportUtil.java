@@ -64,7 +64,7 @@ public class ExcelExportUtil {
      * @param sheetDataListArr Excel数据
      * @return Workbook
      */
-    public Workbook exportWorkbook(String suffix, List<?>... sheetDataListArr) {
+    public static Workbook exportWorkbook(String suffix, List<?>... sheetDataListArr) {
 
         // data array valid
         if (sheetDataListArr == null || sheetDataListArr.length == 0) {
@@ -89,7 +89,7 @@ public class ExcelExportUtil {
      * @param workbook
      * @param sheetDataList class
      */
-    private void makeSheet(Workbook workbook, List<?> sheetDataList) {
+    private static void makeSheet(Workbook workbook, List<?> sheetDataList) {
         // data
         if (sheetDataList == null || sheetDataList.size() == 0) {
             throw new RuntimeException(">>>>>>>>>>> xxl-excel error, data can not be empty.");
@@ -228,7 +228,7 @@ public class ExcelExportUtil {
      * @param filePath
      * @param sheetDataListArr 数据，可变参数，如多个参数则代表导出多张Sheet
      */
-    public void exportToFile(String filePath, List<?>... sheetDataListArr) {
+    public static void exportToFile(String filePath, List<?>... sheetDataListArr) {
         //获取导出文件类型
         String[] pfix = filePath.split("\\.");
         String suffix = pfix[pfix.length - 1];
